@@ -1,4 +1,6 @@
-# gke-triage
+# gke-sre-ai-agent
+
+> Ships the **`gke-triage`** CLI (`pip install gke-triage`).
 
 Local **AI on-call SRE for GKE**. Point it at a degraded workload; it investigates
 **read-only** (via the Antigravity CLI (`agy`, powered by Gemini) + the GKE MCP server behind a safety guardrail),
