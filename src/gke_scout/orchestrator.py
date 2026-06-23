@@ -11,7 +11,7 @@ import time
 from pathlib import Path
 from typing import Callable
 
-from gke_triage.models import Finding, TriageResult
+from gke_scout.models import Finding, TriageResult
 
 _BLOCK_RE = re.compile(r"```STRUCTURED_RESULT\s*(\{.*?\})\s*```", re.DOTALL)
 
@@ -25,7 +25,7 @@ _SKILL_PATH = Path(__file__).parent / "skills" / "k8s-troubleshooter" / "SKILL.m
 INLINE_PROMPT_TEMPLATE = """\
 Investigate workload '{workload}' in namespace '{namespace}'.
 {cluster_context}
-IMPORTANT: Use ONLY the MCP tools from the gke-triage-guardrail server to query the
+IMPORTANT: Use ONLY the MCP tools from the gke-scout-guardrail server to query the
 cluster. Do NOT use shell commands like kubectl or gcloud — they will not work.
 
 Follow these instructions exactly:
@@ -217,8 +217,8 @@ def antigravity_runner(prompt: str, workdir: Path | None = None,
     registered MCP servers hanging agy at startup.  Falls back to reading the
     conversation database when agy's print mode fails to emit stdout.
     """
-    from gke_triage.engines import DEFAULT_MCP_CONFIG, write_isolated_mcp_config
-    from gke_triage.config import DEFAULT_ENDPOINT, DEFAULT_AUDIT
+    from gke_scout.engines import DEFAULT_MCP_CONFIG, write_isolated_mcp_config
+    from gke_scout.config import DEFAULT_ENDPOINT, DEFAULT_AUDIT
 
     shared_cfg = Path(DEFAULT_MCP_CONFIG).expanduser()
     isolated_cfg = write_isolated_mcp_config(DEFAULT_ENDPOINT, DEFAULT_AUDIT)

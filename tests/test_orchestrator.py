@@ -2,8 +2,8 @@ import subprocess
 
 import pytest
 
-from gke_triage.models import TriageResult
-from gke_triage.orchestrator import (
+from gke_scout.models import TriageResult
+from gke_scout.orchestrator import (
     DEFAULT_TIMEOUT, EngineTimeout, parse_structured_result, diagnose, _run_cli,
 )
 
@@ -34,7 +34,7 @@ def test_parse_missing_block_returns_inconclusive():
 
 
 def test_diagnose_calls_engine(tmp_path, monkeypatch):
-    from gke_triage import orchestrator
+    from gke_scout import orchestrator
     calls = []
     def fake_runner(prompt: str, workdir=None, timeout=None) -> str:
         calls.append(prompt)
@@ -47,7 +47,7 @@ def test_diagnose_calls_engine(tmp_path, monkeypatch):
 
 
 def test_diagnose_forwards_timeout(monkeypatch):
-    from gke_triage import orchestrator
+    from gke_scout import orchestrator
     captured = {}
     def fake_runner(prompt: str, workdir=None, timeout=None) -> str:
         captured["timeout"] = timeout
@@ -80,7 +80,7 @@ def test_run_cli_timeout_captures_partial_output(monkeypatch):
 
 
 def test_get_engine_selects_engines():
-    from gke_triage.orchestrator import get_engine, antigravity_runner, gemini_runner
+    from gke_scout.orchestrator import get_engine, antigravity_runner, gemini_runner
     runner_agy, inline_agy = get_engine("antigravity")
     runner_gem, inline_gem = get_engine("gemini")
     assert runner_agy is antigravity_runner
@@ -90,6 +90,6 @@ def test_get_engine_selects_engines():
 
 
 def test_get_engine_unknown_raises():
-    from gke_triage.orchestrator import get_engine
+    from gke_scout.orchestrator import get_engine
     with pytest.raises(ValueError, match="unknown engine"):
         get_engine("bogus")

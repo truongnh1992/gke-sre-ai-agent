@@ -4,8 +4,8 @@ import json
 from datetime import datetime, timezone
 from pathlib import Path
 
-from gke_triage.guardrail.redact import redact
-from gke_triage.models import Decision, ToolCall
+from gke_scout.guardrail.redact import redact
+from gke_scout.models import Decision, ToolCall
 
 
 class AuditLog:

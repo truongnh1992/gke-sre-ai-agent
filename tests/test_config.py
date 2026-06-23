@@ -1,13 +1,13 @@
 import pytest
 
-from gke_triage.config import Config, load_config, DEFAULT_CONFIG_YAML
+from gke_scout.config import Config, load_config, DEFAULT_CONFIG_YAML
 
 
 def test_load_config_from_file(tmp_path):
     p = tmp_path / "config.yaml"
     p.write_text(
         "upstream_mcp_endpoint: https://container.googleapis.com/mcp\n"
-        "audit_log: ~/.gke-triage/audit.jsonl\n"
+        "audit_log: ~/.gke-scout/audit.jsonl\n"
     )
     cfg = load_config(p)
     assert cfg.upstream_mcp_endpoint.endswith("/mcp")

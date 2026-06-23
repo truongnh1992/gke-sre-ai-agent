@@ -8,23 +8,23 @@ _BUNDLED_SKILLS = Path(__file__).parent / "skills"
 
 DEFAULT_MCP_CONFIG = "~/.gemini/config/mcp_config.json"
 DEFAULT_SKILLS_DIR = "~/.gemini/skills"
-GUARDRAIL_SERVER_NAME = "gke-triage-guardrail"
+GUARDRAIL_SERVER_NAME = "gke-scout-guardrail"
 
 
 def guardrail_server_entry(upstream: str, audit_path: str,
-                           command: str = "gke-triage") -> dict:
+                           command: str = "gke-scout") -> dict:
     """Build the Antigravity mcp_config.json entry for the local guardrail proxy.
 
-    Registered as a LOCAL stdio server: the CLI launches `gke-triage _serve-proxy`,
-    which forwards to the real GKE MCP server (GKE_TRIAGE_UPSTREAM) behind the
+    Registered as a LOCAL stdio server: the CLI launches `gke-scout _serve-proxy`,
+    which forwards to the real GKE MCP server (GKE_SCOUT_UPSTREAM) behind the
     read-only guardrail. The CLI never talks to the cluster directly.
     """
     return {
         "command": command,
         "args": ["_serve-proxy"],
         "env": {
-            "GKE_TRIAGE_UPSTREAM": upstream,
-            "GKE_TRIAGE_AUDIT": audit_path,
+            "GKE_SCOUT_UPSTREAM": upstream,
+            "GKE_SCOUT_AUDIT": audit_path,
         },
     }
 
@@ -64,11 +64,11 @@ def install_skill(skills_dir: str | Path, skill_name: str = "k8s-troubleshooter"
     return str(dest)
 
 
-DEFAULT_ISOLATED_MCP_CONFIG = "~/.gke-triage/mcp_config.json"
+DEFAULT_ISOLATED_MCP_CONFIG = "~/.gke-scout/mcp_config.json"
 
 
 def write_isolated_mcp_config(upstream: str, audit_path: str,
-                              command: str = "gke-triage",
+                              command: str = "gke-scout",
                               path: str | Path | None = None) -> str:
     """Write an MCP config containing only the guardrail server.
 
@@ -87,7 +87,7 @@ def write_isolated_mcp_config(upstream: str, audit_path: str,
 def ensure_antigravity_setup(upstream: str, audit_path: str,
                              config_path: str | Path = DEFAULT_MCP_CONFIG,
                              skills_dir: str | Path = DEFAULT_SKILLS_DIR,
-                             command: str = "gke-triage") -> dict:
+                             command: str = "gke-scout") -> dict:
     """Register the guardrail MCP server and install the skill for Antigravity CLI.
 
     Idempotent; safe to call before every run. Returns the resolved paths.

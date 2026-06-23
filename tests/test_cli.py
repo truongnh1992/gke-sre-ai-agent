@@ -1,6 +1,6 @@
 from typer.testing import CliRunner
 
-from gke_triage.cli import app
+from gke_scout.cli import app
 
 runner = CliRunner()
 
@@ -14,7 +14,7 @@ def test_init_scaffolds_config(tmp_path):
 
 
 def test_diagnose_end_to_end_with_fake_runner(tmp_path, monkeypatch):
-    from gke_triage import orchestrator
+    from gke_scout import orchestrator
 
     sample = (
         'x```STRUCTURED_RESULT\n'
@@ -24,7 +24,7 @@ def test_diagnose_end_to_end_with_fake_runner(tmp_path, monkeypatch):
     fake_runner = lambda prompt, workdir=None, timeout=None: sample
     monkeypatch.setattr(orchestrator, "ENGINES",
                         {"antigravity": (fake_runner, True)})
-    monkeypatch.setattr("gke_triage.cli.ensure_antigravity_setup", lambda **kw: {"config_path": "x", "skill_path": "y", "server_name": "z"})
+    monkeypatch.setattr("gke_scout.cli.ensure_antigravity_setup", lambda **kw: {"config_path": "x", "skill_path": "y", "server_name": "z"})
 
     out_dir = tmp_path / "out"
     result = runner.invoke(app, [
@@ -39,7 +39,7 @@ def test_diagnose_end_to_end_with_fake_runner(tmp_path, monkeypatch):
 
 def test_register_command_writes_config_and_skill(tmp_path, monkeypatch):
     import json
-    import gke_triage.engines as eng
+    import gke_scout.engines as eng
     monkeypatch.setattr(eng, "DEFAULT_ISOLATED_MCP_CONFIG",
                         str(tmp_path / "isolated_mcp.json"))
     cfg = tmp_path / "mcp_config.json"
@@ -47,15 +47,15 @@ def test_register_command_writes_config_and_skill(tmp_path, monkeypatch):
     result = runner.invoke(app, ["register", "--config", str(cfg), "--skills", str(skills)])
     assert result.exit_code == 0, result.output
     data = json.loads(cfg.read_text())
-    assert "gke-triage-guardrail" in data["mcpServers"]
+    assert "gke-scout-guardrail" in data["mcpServers"]
     assert (skills / "k8s-troubleshooter" / "SKILL.md").exists()
 
 
 def test_diagnose_registers_guardrail_for_antigravity(tmp_path, monkeypatch):
-    from gke_triage import orchestrator
+    from gke_scout import orchestrator
 
     called = {}
-    monkeypatch.setattr("gke_triage.cli.ensure_antigravity_setup",
+    monkeypatch.setattr("gke_scout.cli.ensure_antigravity_setup",
                         lambda **kw: called.setdefault("kw", kw) or {"config_path": "x", "skill_path": "y", "server_name": "z"})
     fake_runner = lambda prompt, workdir=None, timeout=None: "no structured block"
     monkeypatch.setattr(orchestrator, "ENGINES",

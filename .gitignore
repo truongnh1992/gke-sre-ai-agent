@@ -8,8 +8,8 @@ __pycache__/
 # Virtualenv / uv
 .venv/
 
-# gke-triage runtime output
-gke-triage-out/
+# gke-scout runtime output
+gke-scout-out/
 *.jsonl
 
 # OS

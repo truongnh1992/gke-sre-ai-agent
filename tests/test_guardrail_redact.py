@@ -1,4 +1,4 @@
-from gke_triage.guardrail.redact import redact
+from gke_scout.guardrail.redact import redact
 
 
 def test_redacts_secret_kind_data_values():

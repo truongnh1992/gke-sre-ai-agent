@@ -10,10 +10,10 @@ from mcp.client.session import ClientSession
 from mcp.client.streamable_http import streamablehttp_client
 from mcp.types import TextContent, CallToolResult
 
-from gke_triage.guardrail.audit import AuditLog
-from gke_triage.guardrail.policy import evaluate
-from gke_triage.guardrail.redact import redact
-from gke_triage.models import ToolCall
+from gke_scout.guardrail.audit import AuditLog
+from gke_scout.guardrail.policy import evaluate
+from gke_scout.guardrail.redact import redact
+from gke_scout.models import ToolCall
 
 UPSTREAM_CONNECT_TIMEOUT = 30   # seconds to establish upstream MCP session
 UPSTREAM_CALL_TIMEOUT = 60      # seconds per tool call to upstream
@@ -97,7 +97,7 @@ async def handle_call_tool(
 
 
 async def serve(endpoint: str, audit_path: str) -> None:
-    server = Server("gke-triage-guardrail")
+    server = Server("gke-scout-guardrail")
     audit = AuditLog(audit_path)
 
     try:
@@ -151,6 +151,6 @@ async def serve(endpoint: str, audit_path: str) -> None:
 
 
 def main() -> None:
-    endpoint = os.environ.get("GKE_TRIAGE_UPSTREAM", "https://container.googleapis.com/mcp")
-    audit_path = os.environ.get("GKE_TRIAGE_AUDIT", os.path.expanduser("~/.gke-triage/audit.jsonl"))
+    endpoint = os.environ.get("GKE_SCOUT_UPSTREAM", "https://container.googleapis.com/mcp")
+    audit_path = os.environ.get("GKE_SCOUT_AUDIT", os.path.expanduser("~/.gke-scout/audit.jsonl"))
     asyncio.run(serve(endpoint, audit_path))

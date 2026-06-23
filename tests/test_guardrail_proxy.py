@@ -1,8 +1,8 @@
 import json
 
-from gke_triage.guardrail.proxy import Guardrail
-from gke_triage.guardrail.audit import AuditLog
-from gke_triage.models import ToolCall
+from gke_scout.guardrail.proxy import Guardrail
+from gke_scout.guardrail.audit import AuditLog
+from gke_scout.models import ToolCall
 
 
 class FakeUpstream:

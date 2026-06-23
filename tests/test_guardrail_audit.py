@@ -1,7 +1,7 @@
 import json
 
-from gke_triage.guardrail.audit import AuditLog
-from gke_triage.models import Decision, ToolCall
+from gke_scout.guardrail.audit import AuditLog
+from gke_scout.models import Decision, ToolCall
 
 
 def test_appends_jsonl_entries(tmp_path):

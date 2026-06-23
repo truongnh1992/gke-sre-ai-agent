@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import re
 
-from gke_triage.models import Decision, ToolCall
+from gke_scout.models import Decision, ToolCall
 
 _TOKEN_SPLIT_RE = re.compile(r"[^A-Za-z0-9]+|(?<=[a-z0-9])(?=[A-Z])")
 

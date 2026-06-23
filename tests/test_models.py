@@ -1,4 +1,4 @@
-from gke_triage.models import ToolCall, Decision, Finding, TriageResult
+from gke_scout.models import ToolCall, Decision, Finding, TriageResult
 
 
 def test_toolcall_roundtrip():

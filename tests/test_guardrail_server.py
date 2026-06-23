@@ -3,8 +3,8 @@ from dataclasses import dataclass
 
 import pytest
 
-from gke_triage.guardrail.audit import AuditLog
-from gke_triage.guardrail.server import handle_call_tool
+from gke_scout.guardrail.audit import AuditLog
+from gke_scout.guardrail.server import handle_call_tool
 
 
 @dataclass

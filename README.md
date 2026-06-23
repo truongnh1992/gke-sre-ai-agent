@@ -1,87 +1,151 @@
 # gke-sre-ai-agent
 
-> Ships the **`gke-triage`** CLI (install from source with `uv tool install .`).
+> Ships the **`gke-scout`** CLI — an AI on-call SRE for Google Kubernetes Engine.
 
-Local **AI on-call SRE for GKE**. Point it at a degraded workload; it investigates
-**read-only** (via the Antigravity CLI (`agy`, powered by Gemini) + the GKE MCP server behind a safety guardrail)
-and writes an evidence-cited root-cause report. It never mutates your cluster.
+Point it at a broken workload; it investigates **read-only**, writes an
+evidence-cited root-cause report, and never touches your cluster. Under the
+hood it uses the Antigravity CLI (`agy`, powered by Gemini) talking to the
+GKE MCP server through a safety guardrail proxy.
 
-## Why
+## Prerequisites
 
-An AI can find broken workloads quickly, but the hard part for real teams is
-*trusting* an agent near production. `gke-triage` makes it safe: read-only by
-default, secrets redacted before they reach the model, and every tool call
-written to an append-only **audit** log. It only ever reports a diagnosis — it
-never changes your cluster or your manifests.
+Before you start, make sure you have these installed and configured:
 
-## Install
+| Tool | Purpose | Install |
+|------|---------|---------|
+| **gcloud** | Google Cloud auth | [Install guide](https://cloud.google.com/sdk/docs/install) |
+| **kubectl** | Kubernetes context | Bundled with `gcloud components install kubectl` |
+| **agy** | AI reasoning engine (Antigravity CLI) | `go install github.com/anthropics/antigravity@latest` or your org's install method |
+| **uv** | Python package manager | `curl -LsSf https://astral.sh/uv/install.sh \| sh` |
 
-```bash
-uv tool install .               # install from local source
-gke-triage init                 # scaffold ~/.gke-triage/config.yaml
+## Quick start
+
+### 1. Authenticate with Google Cloud
+
+```console
+gcloud auth login
+gcloud auth application-default login   # needed for the guardrail proxy
 ```
 
-Prerequisites: `gcloud` (authenticated), `kubectl`, and `agy` (Antigravity CLI) — or
-`gemini` (Gemini CLI) with `--engine gemini`.
+### 2. Connect to your GKE cluster
 
-## Register the guardrail with your engine
-
-`gke-triage` runs the agent behind a read-only guardrail MCP server. Register it once:
-
-```bash
-gke-triage register   # writes ~/.gemini/config/mcp_config.json + installs the skill
+```console
+gcloud container clusters get-credentials CLUSTER_NAME \
+  --region REGION --project PROJECT_ID
 ```
 
-This adds a local stdio MCP server `gke-triage-guardrail` (the Antigravity CLI launches
-`gke-triage _serve-proxy`, which proxies the GKE MCP server behind the read-only guardrail)
-and installs the `k8s-troubleshooter` skill to `~/.gemini/skills/`. `gke-triage diagnose`
-also performs this registration automatically when using the default `antigravity` engine.
+Verify with `kubectl get nodes` — you should see your cluster's nodes.
 
-The Antigravity CLI keeps its own plugin registry. Import the Gemini-side config
-(guardrail MCP server + skill) into `agy` once:
+### 3. Install gke-scout
 
-```bash
-agy plugin import gemini
+```console
+git clone https://github.com/truongnh1992/gke-sre-ai-agent.git
+cd gke-sre-ai-agent
+uv tool install .
 ```
 
-For the `antigravity` engine, `gke-triage` also inlines the `k8s-troubleshooter`
-instructions directly into the prompt and runs `agy` non-interactively with
-`--dangerously-skip-permissions --print-timeout 15m`, so investigations complete
-without manual approval prompts and have headroom for multi-step cases.
+### 4. Initialize config
 
-## Usage
-
-```bash
-gke-triage diagnose ${YOUR-DEPLOYMENT} -n ${YOUR-NAMESPACE}
-# read-only investigation -> evidence-cited report
-gke-triage diagnose ${YOUR-DEPLOYMENT} -n ${YOUR-NAMESPACE} --engine gemini   # use Gemini CLI instead
-gke-triage diagnose ${YOUR-DEPLOYMENT} -n ${YOUR-NAMESPACE} --verbose         # dump raw engine output
+```console
+gke-scout init                # creates ~/.gke-scout/config.yaml
 ```
 
-Outputs land in `./gke-triage-out/`: a Markdown root-cause report containing the
-root cause, a confidence level (`high`/`medium`/`low`), and evidence-cited
-findings. Low-confidence runs instead list ranked hypotheses.
+### 5. Import the guardrail into agy
 
-A live spinner with an elapsed-time counter is shown while the agent runs. A
-diagnosis is an autonomous, multi-step investigation (list/describe pods, read
-events and logs), so runs typically take a few minutes; genuinely broken,
-multi-issue workloads take longer. Healthy workloads (all pods Ready, no
-restarts, no warning events) short-circuit early and return in seconds. Use
-`--verbose` to print the raw engine output when a run ends up inconclusive.
+```console
+gke-scout register            # registers the MCP server + installs the skill
+agy plugin import gemini       # imports into agy's plugin registry
+```
 
-## Safety model
+> You only need to run this once. `gke-scout diagnose` also auto-registers
+> before each run, so this step is optional.
 
-- **Read-only allowlist (default-deny):** any mutating verb (apply/patch/delete/
-  scale/exec/...) is blocked before reaching the cluster.
-- **Secret redaction:** Secret values and sensitive keys are scrubbed from tool
-  outputs.
-- **Audit log:** every tool call (allowed or blocked) is appended to
-  `~/.gke-triage/audit.jsonl`.
+### 6. Diagnose a workload
+
+```console
+gke-scout diagnose <DEPLOYMENT_NAME>
+```
+
+That's it. A spinner shows progress while the agent investigates. When it
+finishes, a Markdown report appears in `./gke-scout-out/`.
+
+## Usage examples
+
+```console
+# Diagnose a deployment in the default namespace
+gke-scout diagnose frontend
+
+# Specify a namespace
+gke-scout diagnose payment-service -n payments
+
+# See raw engine output (useful for debugging)
+gke-scout diagnose frontend --verbose
+
+# Set a custom timeout (default: 5 minutes)
+gke-scout diagnose frontend --timeout 120
+
+# Use Gemini CLI instead of agy
+gke-scout diagnose frontend --engine gemini
+```
+
+## What the output looks like
+
+Reports are saved to `./gke-scout-out/<workload>-report.md` and contain:
+
+- **Root cause** — a one-sentence diagnosis
+- **Confidence** — `high`, `medium`, or `low`
+- **Findings** — evidence-cited details (pod status, events, logs)
+
+Low-confidence runs list ranked hypotheses instead.
+
+## How it works
+
+```
+You run:  gke-scout diagnose frontend
+                    │
+                    ▼
+          ┌─────────────────┐
+          │  gke-scout CLI  │  builds prompt, starts agy
+          └────────┬────────┘
+                   │
+                   ▼
+          ┌─────────────────┐
+          │   agy (Gemini)  │  AI agent reasons + calls MCP tools
+          └────────┬────────┘
+                   │ stdio
+                   ▼
+          ┌─────────────────┐
+          │ guardrail proxy │  blocks writes, redacts secrets, audits
+          └────────┬────────┘
+                   │ HTTPS
+                   ▼
+          ┌─────────────────┐
+          │  GKE MCP server │  container.googleapis.com/mcp
+          └─────────────────┘
+```
+
+The guardrail proxy sits between the AI agent and your cluster. It:
+- **Blocks** any mutating call (apply, patch, delete, scale, exec)
+- **Redacts** secrets and sensitive values from API responses
+- **Logs** every tool call to `~/.gke-scout/audit.jsonl`
+
+## Troubleshooting
+
+| Problem | Fix |
+|---------|-----|
+| `gke-scout: command not found` | Run `uv tool install .` from the repo root |
+| Timeout errors | Increase with `--timeout 600` (seconds) |
+| `ADC auth failed` | Run `gcloud auth application-default login` |
+| Agent uses wrong cluster | Check `kubectl config current-context` |
+| Empty or inconclusive report | Re-run with `--verbose` to see raw output |
 
 ## Benchmark
 
-`eval/scenarios/` holds reproducible broken-workload scenarios covering common
-failure classes. Run `uv run python eval/run_eval.py` to evaluate.
+`eval/scenarios/` holds reproducible broken-workload scenarios. Run:
+
+```console
+uv run python eval/run_eval.py
+```
 
 ## License
 

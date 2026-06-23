@@ -6,10 +6,10 @@ from pathlib import Path
 import yaml
 
 DEFAULT_ENDPOINT = "https://container.googleapis.com/mcp"
-DEFAULT_AUDIT = "~/.gke-triage/audit.jsonl"
+DEFAULT_AUDIT = "~/.gke-scout/audit.jsonl"
 
 DEFAULT_CONFIG_YAML = f"""\
-# gke-triage configuration
+# gke-scout configuration
 upstream_mcp_endpoint: {DEFAULT_ENDPOINT}
 audit_log: {DEFAULT_AUDIT}
 engine: antigravity            # reasoning engine: antigravity (agy) or gemini

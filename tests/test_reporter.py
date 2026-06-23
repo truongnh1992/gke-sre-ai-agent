@@ -1,5 +1,5 @@
-from gke_triage.models import Finding, TriageResult
-from gke_triage.reporter import render_report, write_outputs
+from gke_scout.models import Finding, TriageResult
+from gke_scout.reporter import render_report, write_outputs
 
 
 def _result():

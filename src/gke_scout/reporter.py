@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from gke_triage.models import TriageResult
+from gke_scout.models import TriageResult
 
 
 def render_report(workload: str, namespace: str, result: TriageResult) -> str:

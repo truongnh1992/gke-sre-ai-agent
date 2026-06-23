@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 
-from gke_triage.engines import (
+from gke_scout.engines import (
     guardrail_server_entry, register_mcp_server, install_skill,
     ensure_antigravity_setup, GUARDRAIL_SERVER_NAME,
 )
@@ -9,26 +9,26 @@ from gke_triage.engines import (
 
 def test_guardrail_server_entry_shape():
     e = guardrail_server_entry("https://up/mcp", "/a/audit.jsonl")
-    assert e["command"] == "gke-triage"
+    assert e["command"] == "gke-scout"
     assert e["args"] == ["_serve-proxy"]
-    assert e["env"]["GKE_TRIAGE_UPSTREAM"] == "https://up/mcp"
-    assert e["env"]["GKE_TRIAGE_AUDIT"] == "/a/audit.jsonl"
+    assert e["env"]["GKE_SCOUT_UPSTREAM"] == "https://up/mcp"
+    assert e["env"]["GKE_SCOUT_AUDIT"] == "/a/audit.jsonl"
 
 
 def test_register_creates_file_with_mcpservers(tmp_path):
     cfg = tmp_path / "mcp_config.json"
-    register_mcp_server(cfg, "gke-triage-guardrail", {"command": "x"})
+    register_mcp_server(cfg, "gke-scout-guardrail", {"command": "x"})
     data = json.loads(cfg.read_text())
-    assert data["mcpServers"]["gke-triage-guardrail"]["command"] == "x"
+    assert data["mcpServers"]["gke-scout-guardrail"]["command"] == "x"
 
 
 def test_register_preserves_existing_servers_and_keys(tmp_path):
     cfg = tmp_path / "mcp_config.json"
     cfg.write_text(json.dumps({"mcpServers": {"other": {"command": "o"}}, "foo": 1}))
-    register_mcp_server(cfg, "gke-triage-guardrail", {"command": "x"})
+    register_mcp_server(cfg, "gke-scout-guardrail", {"command": "x"})
     data = json.loads(cfg.read_text())
     assert data["mcpServers"]["other"]["command"] == "o"
-    assert data["mcpServers"]["gke-triage-guardrail"]["command"] == "x"
+    assert data["mcpServers"]["gke-scout-guardrail"]["command"] == "x"
     assert data["foo"] == 1
 
 
@@ -58,7 +58,7 @@ def test_install_skill_copies_skill_md(tmp_path):
 
 
 def test_ensure_antigravity_setup_wires_both(tmp_path, monkeypatch):
-    import gke_triage.engines as eng
+    import gke_scout.engines as eng
     monkeypatch.setattr(eng, "DEFAULT_ISOLATED_MCP_CONFIG",
                         str(tmp_path / "isolated_mcp.json"))
     cfg = tmp_path / "mcp_config.json"
@@ -67,7 +67,7 @@ def test_ensure_antigravity_setup_wires_both(tmp_path, monkeypatch):
                                     config_path=cfg, skills_dir=skills)
     data = json.loads(cfg.read_text())
     assert GUARDRAIL_SERVER_NAME in data["mcpServers"]
-    assert data["mcpServers"][GUARDRAIL_SERVER_NAME]["env"]["GKE_TRIAGE_UPSTREAM"] == "https://up/mcp"
+    assert data["mcpServers"][GUARDRAIL_SERVER_NAME]["env"]["GKE_SCOUT_UPSTREAM"] == "https://up/mcp"
     assert (skills / "k8s-troubleshooter" / "SKILL.md").exists()
     assert info["server_name"] == GUARDRAIL_SERVER_NAME
     assert "isolated_config_path" in info

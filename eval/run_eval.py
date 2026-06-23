@@ -1,4 +1,4 @@
-"""Check that each broken scenario has the fixtures needed to evaluate gke-triage's
+"""Check that each broken scenario has the fixtures needed to evaluate gke-scout's
 read-only diagnosis (a broken manifest and an expected-fix reference).
 
 Usage: uv run python eval/run_eval.py [--scenario NAME]

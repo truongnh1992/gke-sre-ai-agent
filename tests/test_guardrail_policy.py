@@ -1,7 +1,7 @@
 import pytest
 
-from gke_triage.guardrail.policy import evaluate
-from gke_triage.models import ToolCall
+from gke_scout.guardrail.policy import evaluate
+from gke_scout.models import ToolCall
 
 
 @pytest.mark.parametrize("name", [

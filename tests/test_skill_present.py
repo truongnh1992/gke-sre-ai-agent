@@ -1,10 +1,10 @@
 from pathlib import Path
 
-import gke_triage
+import gke_scout
 
 
 def test_skill_md_exists_and_has_required_sections():
-    root = Path(gke_triage.__file__).parent
+    root = Path(gke_scout.__file__).parent
     skill = root / "skills" / "k8s-troubleshooter" / "SKILL.md"
     assert skill.exists()
     text = skill.read_text()

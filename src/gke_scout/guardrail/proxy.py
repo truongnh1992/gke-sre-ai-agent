@@ -2,10 +2,10 @@ from __future__ import annotations
 
 from typing import Protocol
 
-from gke_triage.guardrail.audit import AuditLog
-from gke_triage.guardrail.policy import evaluate
-from gke_triage.guardrail.redact import redact
-from gke_triage.models import ToolCall
+from gke_scout.guardrail.audit import AuditLog
+from gke_scout.guardrail.policy import evaluate
+from gke_scout.guardrail.redact import redact
+from gke_scout.models import ToolCall
 
 
 class Upstream(Protocol):

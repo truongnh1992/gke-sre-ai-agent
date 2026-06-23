@@ -4,16 +4,16 @@ from pathlib import Path
 
 import typer
 
-from gke_triage.config import DEFAULT_CONFIG_YAML, DEFAULT_ENDPOINT, DEFAULT_AUDIT
-from gke_triage.engines import ensure_antigravity_setup, DEFAULT_MCP_CONFIG, DEFAULT_SKILLS_DIR
-from gke_triage.orchestrator import DEFAULT_TIMEOUT, diagnose as run_diagnose
-from gke_triage.reporter import write_outputs
+from gke_scout.config import DEFAULT_CONFIG_YAML, DEFAULT_ENDPOINT, DEFAULT_AUDIT
+from gke_scout.engines import ensure_antigravity_setup, DEFAULT_MCP_CONFIG, DEFAULT_SKILLS_DIR
+from gke_scout.orchestrator import DEFAULT_TIMEOUT, diagnose as run_diagnose
+from gke_scout.reporter import write_outputs
 
 app = typer.Typer(help="Local AI on-call SRE for GKE (read-only triage with evidence-cited reports).")
 
 
 @app.command()
-def init(path: str = typer.Option("~/.gke-triage/config.yaml", "--path")):
+def init(path: str = typer.Option("~/.gke-scout/config.yaml", "--path")):
     """Scaffold a config file."""
     p = Path(path).expanduser()
     p.parent.mkdir(parents=True, exist_ok=True)
@@ -39,7 +39,7 @@ def register(
 def diagnose(
     workload: str,
     namespace: str = typer.Option("default", "-n", "--namespace"),
-    output: str = typer.Option("./gke-triage-out", "--output"),
+    output: str = typer.Option("./gke-scout-out", "--output"),
     engine: str = typer.Option("antigravity", "--engine", help="Reasoning engine: antigravity or gemini"),
     verbose: bool = typer.Option(False, "--verbose", "-v", help="Print raw engine output for debugging"),
     timeout: int = typer.Option(DEFAULT_TIMEOUT, "--timeout", "-t", help="Max seconds to wait for the agent (0 = no limit)"),
@@ -63,7 +63,7 @@ def diagnose(
 @app.command(name="_serve-proxy", hidden=True)
 def serve_proxy():
     """Run the guardrail stdio MCP server (invoked by Gemini CLI)."""
-    from gke_triage.guardrail.server import main
+    from gke_scout.guardrail.server import main
     main()
 
 
