@@ -98,6 +98,30 @@ Reports are saved to `./gke-scout-out/<workload>-report.md` and contain:
 
 Low-confidence runs list ranked hypotheses instead.
 
+Ouput example:
+
+<details>
+<summary>Example report (click to expand)</summary>
+
+```markdown
+# Triage report: frontend (namespace: default)
+
+**Confidence:** high
+
+## Root cause
+
+The key 'DEMO_USER' is missing from the ConfigMap 'demo-data-config' in the 'default' namespace, causing a CreateContainerConfigError.
+
+## Evidence
+
+### The 'frontend' pod fails to start and remains in a 'CreateContainerConfigError' status.
+- get_k8s_resource for 'pod' returned pod 'frontend-5c67556f49-txfwp' with status 'CreateContainerConfigError'.
+- describe_k8s_resource shows container 'front' has environment variable 'DEFAULT_USERNAME' populated from the key 'DEMO_USER' of ConfigMap 'demo-data-config'.
+- list_k8s_events reports the event: 'Error: couldn't find key DEMO_USER in ConfigMap default/demo-data-config' for pod/frontend-5c67556f49-txfwp.
+```
+
+</details>
+
 ## How it works
 
 ```
