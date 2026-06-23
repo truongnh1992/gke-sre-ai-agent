@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import json
+import os
 import re
+import subprocess
 from pathlib import Path
 from typing import Callable
 
@@ -35,6 +37,26 @@ def parse_structured_result(text: str) -> TriageResult:
         findings=findings,
         proposed_patch=data.get("proposed_patch") or None,
     )
+
+
+SKILLS_DIR = Path(__file__).parent / "skills"
+
+
+def gemini_runner(prompt: str, workdir: Path | None = None) -> str:
+    """Run Gemini CLI non-interactively with the skills dir mounted.
+
+    The guardrail MCP server is registered via a Gemini extension config that
+    invokes `gke-triage _serve-proxy`. Cluster access therefore always passes
+    through the read-only Guardrail.
+    """
+    env = dict(os.environ)
+    env["GEMINI_SKILLS_DIR"] = str(SKILLS_DIR)
+    cmd = ["gemini", "-p", prompt]
+    result = subprocess.run(
+        cmd, cwd=str(workdir) if workdir else None,
+        env=env, capture_output=True, text=True,
+    )
+    return result.stdout
 
 
 def diagnose(workload: str, namespace: str,
