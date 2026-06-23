@@ -41,9 +41,10 @@ def render_report(workload: str, namespace: str, result: TriageResult) -> str:
 def _open_pr(repo_root: Path, patch_path: Path, workload: str) -> str | None:
     branch = f"gke-triage/fix-{workload}"
     try:
-        subprocess.run(["git", "-C", str(repo_root), "checkout", "-b", branch], check=True)
+        subprocess.run(["git", "-C", str(repo_root), "checkout", "-B", branch], check=True)
         subprocess.run(["git", "-C", str(repo_root), "apply", str(patch_path)], check=True)
-        subprocess.run(["git", "-C", str(repo_root), "commit", "-am",
+        subprocess.run(["git", "-C", str(repo_root), "add", "-u"], check=True)
+        subprocess.run(["git", "-C", str(repo_root), "commit", "-m",
                         f"fix({workload}): gke-triage proposed fix"], check=True)
         subprocess.run(["git", "-C", str(repo_root), "push", "-u", "origin", branch], check=True)
         out = subprocess.run(

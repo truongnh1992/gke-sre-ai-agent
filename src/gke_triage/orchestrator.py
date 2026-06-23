@@ -15,6 +15,7 @@ PROMPT_TEMPLATE = (
     "Use the k8s-troubleshooter skill. Investigate workload '{workload}' in "
     "namespace '{namespace}' read-only and emit the STRUCTURED_RESULT block."
 )
+MANIFEST_HINT_TEMPLATE = " The source manifest is at '{path}' in the current directory."
 
 
 def parse_structured_result(text: str) -> TriageResult:
@@ -56,12 +57,19 @@ def gemini_runner(prompt: str, workdir: Path | None = None) -> str:
         cmd, cwd=str(workdir) if workdir else None,
         env=env, capture_output=True, text=True,
     )
+    if result.returncode != 0:
+        raise RuntimeError(
+            f"gemini CLI exited with code {result.returncode}: {result.stderr.strip()}"
+        )
     return result.stdout
 
 
 def diagnose(workload: str, namespace: str,
              runner: Callable[[str, Path | None], str],
-             workdir: Path | None = None) -> TriageResult:
+             workdir: Path | None = None,
+             manifest_hint: str | None = None) -> TriageResult:
     prompt = PROMPT_TEMPLATE.format(workload=workload, namespace=namespace)
+    if manifest_hint:
+        prompt += MANIFEST_HINT_TEMPLATE.format(path=manifest_hint)
     output = runner(prompt, workdir)
     return parse_structured_result(output)

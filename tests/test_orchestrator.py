@@ -36,3 +36,12 @@ def test_diagnose_uses_injected_runner(tmp_path):
         return SAMPLE
     r = diagnose("payments", "prod", runner=fake_runner)
     assert r.root_cause == "bad tag"
+
+
+def test_diagnose_includes_manifest_hint_in_prompt():
+    seen = {}
+    def fake_runner(prompt, workdir=None):
+        seen["prompt"] = prompt
+        return "no block"
+    diagnose("payments", "prod", runner=fake_runner, manifest_hint="apps/payments.yaml")
+    assert "apps/payments.yaml" in seen["prompt"]

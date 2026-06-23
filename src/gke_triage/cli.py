@@ -5,6 +5,7 @@ from pathlib import Path
 import typer
 
 from gke_triage.config import DEFAULT_CONFIG_YAML
+from gke_triage.context.sources import find_manifest_for_workload
 from gke_triage.orchestrator import diagnose as run_diagnose, gemini_runner
 from gke_triage.reporter import write_outputs
 
@@ -29,7 +30,13 @@ def diagnose(
     open_pr: bool = typer.Option(True, "--pr/--no-pr"),
 ):
     """Investigate a workload read-only and emit a report + proposed fix."""
-    result = run_diagnose(workload, namespace, runner=gemini_runner)
+    manifest_hint = find_manifest_for_workload(repo, workload)
+    try:
+        result = run_diagnose(workload, namespace, runner=gemini_runner,
+                              workdir=Path(repo), manifest_hint=manifest_hint)
+    except RuntimeError as exc:
+        typer.echo(f"Error: {exc}")
+        raise typer.Exit(code=1)
     out = write_outputs(output, workload, namespace, result,
                         open_pr=open_pr, repo_root=repo)
     typer.echo(f"Report: {Path(output) / out['report']}")
