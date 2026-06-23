@@ -45,3 +45,16 @@ def test_diagnose_includes_manifest_hint_in_prompt():
         return "no block"
     diagnose("payments", "prod", runner=fake_runner, manifest_hint="apps/payments.yaml")
     assert "apps/payments.yaml" in seen["prompt"]
+
+
+def test_get_runner_selects_engines():
+    from gke_triage.orchestrator import get_runner, antigravity_runner, gemini_runner
+    assert get_runner("antigravity") is antigravity_runner
+    assert get_runner("gemini") is gemini_runner
+
+
+def test_get_runner_unknown_raises():
+    import pytest
+    from gke_triage.orchestrator import get_runner
+    with pytest.raises(ValueError, match="unknown engine"):
+        get_runner("bogus")

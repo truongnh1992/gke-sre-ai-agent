@@ -1,7 +1,7 @@
 # gke-triage
 
 Local **AI on-call SRE for GKE**. Point it at a degraded workload; it investigates
-**read-only** (via Gemini CLI + the GKE MCP server behind a safety guardrail),
+**read-only** (via the Antigravity CLI (`agy`, powered by Gemini) + the GKE MCP server behind a safety guardrail),
 writes an evidence-cited root-cause report, and proposes the fix as a **GitOps
 diff / PR**. It never mutates your cluster.
 
@@ -20,7 +20,7 @@ uv tool install gke-triage      # or: uv sync (from source)
 gke-triage init                 # scaffold ~/.gke-triage/config.yaml
 ```
 
-Prerequisites: `gcloud` (authenticated), `kubectl`, `gemini` CLI, and `gh`
+Prerequisites: `gcloud` (authenticated), `kubectl`, `agy` (Antigravity CLI) — or `gemini` (Gemini CLI) with `--engine gemini`, and `gh`
 (for PR creation).
 
 ## Usage
@@ -29,6 +29,7 @@ Prerequisites: `gcloud` (authenticated), `kubectl`, `gemini` CLI, and `gh`
 gke-triage diagnose payments -n prod --repo ./gitops
 # read-only investigation -> report + proposed fix PR
 gke-triage diagnose payments -n prod --repo ./gitops --no-pr   # emit .patch only
+gke-triage diagnose payments -n prod --repo ./gitops --engine gemini   # use Gemini CLI instead
 ```
 
 Outputs land in `./gke-triage-out/`: a Markdown report and a `.patch` (and a PR

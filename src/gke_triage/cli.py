@@ -6,7 +6,7 @@ import typer
 
 from gke_triage.config import DEFAULT_CONFIG_YAML
 from gke_triage.context.sources import find_manifest_for_workload
-from gke_triage.orchestrator import diagnose as run_diagnose, gemini_runner
+from gke_triage.orchestrator import diagnose as run_diagnose, get_runner
 from gke_triage.reporter import write_outputs
 
 app = typer.Typer(help="Local AI on-call SRE for GKE (read-only triage + GitOps fix PRs).")
@@ -28,13 +28,15 @@ def diagnose(
     repo: str = typer.Option(".", "--repo", help="GitOps repo root"),
     output: str = typer.Option("./gke-triage-out", "--output"),
     open_pr: bool = typer.Option(True, "--pr/--no-pr"),
+    engine: str = typer.Option("antigravity", "--engine", help="Reasoning engine: antigravity or gemini"),
 ):
     """Investigate a workload read-only and emit a report + proposed fix."""
     manifest_hint = find_manifest_for_workload(repo, workload)
     try:
-        result = run_diagnose(workload, namespace, runner=gemini_runner,
+        runner = get_runner(engine)
+        result = run_diagnose(workload, namespace, runner=runner,
                               workdir=Path(repo), manifest_hint=manifest_hint)
-    except RuntimeError as exc:
+    except (RuntimeError, ValueError) as exc:
         typer.echo(f"Error: {exc}")
         raise typer.Exit(code=1)
     out = write_outputs(output, workload, namespace, result,

@@ -64,6 +64,45 @@ def gemini_runner(prompt: str, workdir: Path | None = None) -> str:
     return result.stdout
 
 
+def antigravity_runner(prompt: str, workdir: Path | None = None) -> str:
+    """Run the Antigravity CLI (`agy`) non-interactively as the reasoning engine.
+
+    Powered by Gemini models. The guardrail MCP proxy (`gke-triage _serve-proxy`)
+    must be registered with the CLI so all cluster access is read-only; the exact
+    `agy` MCP-registration mechanism is the engine-specific integration point to
+    confirm against the installed CLI version.
+    """
+    env = dict(os.environ)
+    env["ANTIGRAVITY_SKILLS_DIR"] = str(SKILLS_DIR)
+    cmd = ["agy", "-p", prompt, "--output-format", "text"]
+    result = subprocess.run(
+        cmd, cwd=str(workdir) if workdir else None,
+        env=env, capture_output=True, text=True,
+    )
+    if result.returncode != 0:
+        raise RuntimeError(
+            f"antigravity CLI (agy) exited with code {result.returncode}: {result.stderr.strip()}"
+        )
+    return result.stdout
+
+
+RUNNERS = {
+    "antigravity": antigravity_runner,
+    "gemini": gemini_runner,
+}
+DEFAULT_ENGINE = "antigravity"
+
+
+def get_runner(engine: str):
+    """Return the runner callable for the named engine."""
+    try:
+        return RUNNERS[engine]
+    except KeyError:
+        raise ValueError(
+            f"unknown engine '{engine}'; choose from {sorted(RUNNERS)}"
+        )
+
+
 def diagnose(workload: str, namespace: str,
              runner: Callable[[str, Path | None], str],
              workdir: Path | None = None,

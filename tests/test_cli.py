@@ -26,7 +26,8 @@ def test_diagnose_end_to_end_with_fake_runner(tmp_path, monkeypatch):
         '"manifest_path":"apps/payments.yaml"}],'
         '"proposed_patch":"--- a/apps/payments.yaml\\n+++ b/apps/payments.yaml\\n"}\n```'
     )
-    monkeypatch.setattr("gke_triage.cli.gemini_runner", lambda prompt, workdir=None: sample)
+    monkeypatch.setattr("gke_triage.cli.get_runner",
+                        lambda engine: (lambda prompt, workdir=None: sample))
 
     out_dir = tmp_path / "out"
     result = runner.invoke(app, [
