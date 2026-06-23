@@ -4,8 +4,9 @@ from pathlib import Path
 
 import typer
 
-from gke_triage.config import DEFAULT_CONFIG_YAML
+from gke_triage.config import DEFAULT_CONFIG_YAML, DEFAULT_ENDPOINT, DEFAULT_AUDIT
 from gke_triage.context.sources import find_manifest_for_workload
+from gke_triage.engines import ensure_antigravity_setup, DEFAULT_MCP_CONFIG, DEFAULT_SKILLS_DIR
 from gke_triage.orchestrator import diagnose as run_diagnose, get_runner
 from gke_triage.reporter import write_outputs
 
@@ -22,6 +23,20 @@ def init(path: str = typer.Option("~/.gke-triage/config.yaml", "--path")):
 
 
 @app.command()
+def register(
+    config: str = typer.Option(DEFAULT_MCP_CONFIG, "--config", help="Antigravity MCP config path"),
+    skills: str = typer.Option(DEFAULT_SKILLS_DIR, "--skills", help="Antigravity skills dir"),
+    upstream: str = typer.Option(DEFAULT_ENDPOINT, "--upstream", help="Upstream GKE MCP endpoint"),
+    audit: str = typer.Option(DEFAULT_AUDIT, "--audit", help="Audit log path"),
+):
+    """Register the read-only guardrail MCP server + skill with the Antigravity CLI."""
+    info = ensure_antigravity_setup(upstream=upstream, audit_path=audit,
+                                    config_path=config, skills_dir=skills)
+    typer.echo(f"Registered '{info['server_name']}' in {info['config_path']}")
+    typer.echo(f"Installed skill to {info['skill_path']}")
+
+
+@app.command()
 def diagnose(
     workload: str,
     namespace: str = typer.Option("default", "-n", "--namespace"),
@@ -33,6 +48,8 @@ def diagnose(
     """Investigate a workload read-only and emit a report + proposed fix."""
     manifest_hint = find_manifest_for_workload(repo, workload)
     try:
+        if engine == "antigravity":
+            ensure_antigravity_setup(upstream=DEFAULT_ENDPOINT, audit_path=DEFAULT_AUDIT)
         runner = get_runner(engine)
         result = run_diagnose(workload, namespace, runner=runner,
                               workdir=Path(repo), manifest_hint=manifest_hint)

@@ -73,7 +73,6 @@ def antigravity_runner(prompt: str, workdir: Path | None = None) -> str:
     confirm against the installed CLI version.
     """
     env = dict(os.environ)
-    env["ANTIGRAVITY_SKILLS_DIR"] = str(SKILLS_DIR)
     cmd = ["agy", "-p", prompt, "--output-format", "text"]
     result = subprocess.run(
         cmd, cwd=str(workdir) if workdir else None,

@@ -23,6 +23,19 @@ gke-triage init                 # scaffold ~/.gke-triage/config.yaml
 Prerequisites: `gcloud` (authenticated), `kubectl`, `agy` (Antigravity CLI) — or `gemini` (Gemini CLI) with `--engine gemini`, and `gh`
 (for PR creation).
 
+## Register the guardrail with your engine
+
+`gke-triage` runs the agent behind a read-only guardrail MCP server. Register it once:
+
+```bash
+gke-triage register   # writes ~/.gemini/config/mcp_config.json + installs the skill
+```
+
+This adds a local stdio MCP server `gke-triage-guardrail` (the Antigravity CLI launches
+`gke-triage _serve-proxy`, which proxies the GKE MCP server behind the read-only guardrail)
+and installs the `k8s-troubleshooter` skill to `~/.gemini/skills/`. `gke-triage diagnose`
+also performs this registration automatically when using the default `antigravity` engine.
+
 ## Usage
 
 ```bash
