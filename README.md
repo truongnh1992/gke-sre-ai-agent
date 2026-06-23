@@ -98,26 +98,24 @@ Reports are saved to `./gke-scout-out/<workload>-report.md` and contain:
 
 Low-confidence runs list ranked hypotheses instead.
 
-Ouput example:
-
 <details>
 <summary>Example report (click to expand)</summary>
 
 ```markdown
-# Triage report: frontend (namespace: default)
+# Triage report: storefront (namespace: default)
 
 **Confidence:** high
 
 ## Root cause
 
-The key 'DEMO_USER' is missing from the ConfigMap 'demo-data-config' in the 'default' namespace, causing a CreateContainerConfigError.
+The ConfigMap 'demo-data-config' in namespace 'default' is missing the key 'DEMO_LOGIN_USERNAME', which is required to set the environment variable 'DEFAULT_USERNAME' in the storefront container.
 
 ## Evidence
 
-### The 'frontend' pod fails to start and remains in a 'CreateContainerConfigError' status.
-- get_k8s_resource for 'pod' returned pod 'frontend-5c67556f49-txfwp' with status 'CreateContainerConfigError'.
-- describe_k8s_resource shows container 'front' has environment variable 'DEFAULT_USERNAME' populated from the key 'DEMO_USER' of ConfigMap 'demo-data-config'.
-- list_k8s_events reports the event: 'Error: couldn't find key DEMO_USER in ConfigMap default/demo-data-config' for pod/frontend-5c67556f49-txfwp.
+### The storefront pod is stuck in a 'CreateContainerConfigError' status because a referenced ConfigMap key does not exist.
+- Pod status: The pod 'storefront-74468d95fc-csvxd' shows STATUS 'CreateContainerConfigError'.
+- Pod event details: Warning event reports 'Error: couldn't find key DEMO_LOGIN_USERNAME in ConfigMap default/demo-data-config'.
+- Container environment reference: Environment variable 'DEFAULT_USERNAME' is configured to retrieve its value from key 'DEMO_LOGIN_USERNAME' of config map 'demo-data-config'.
 ```
 
 </details>
@@ -163,14 +161,8 @@ The guardrail proxy sits between the AI agent and your cluster. It:
 | Agent uses wrong cluster | Check `kubectl config current-context` |
 | Empty or inconclusive report | Re-run with `--verbose` to see raw output |
 
-## Benchmark
-
-`eval/scenarios/` holds reproducible broken-workload scenarios. Run:
-
-```console
-uv run python eval/run_eval.py
-```
-
 ## License
 
-Apache-2.0
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for more information.
+
+> Google Cloud credits are provided for this project.
