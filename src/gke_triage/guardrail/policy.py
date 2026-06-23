@@ -1,6 +1,14 @@
 from __future__ import annotations
 
+import re
+
 from gke_triage.models import Decision, ToolCall
+
+_TOKEN_SPLIT_RE = re.compile(r"[^A-Za-z0-9]+|(?<=[a-z0-9])(?=[A-Z])")
+
+
+def _tokenize(name: str) -> set[str]:
+    return {t.lower() for t in _TOKEN_SPLIT_RE.split(name) if t}
 
 # Tokens that, if present anywhere in a tool name, indicate mutation/side-effects.
 MUTATING_TOKENS = frozenset({
@@ -18,7 +26,7 @@ READ_TOKENS = frozenset({
 
 
 def evaluate(call: ToolCall) -> Decision:
-    tokens = set(call.name.lower().split("_"))
+    tokens = _tokenize(call.name)
 
     mutating = tokens & MUTATING_TOKENS
     if mutating:

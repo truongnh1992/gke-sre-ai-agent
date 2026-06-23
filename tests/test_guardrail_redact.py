@@ -37,3 +37,9 @@ def test_redacts_in_strings_via_regex():
     out = redact(text)
     assert "abcdef123456789" not in out
     assert "REDACTED" in out
+
+
+def test_redacts_bearer_with_base64_chars():
+    out = redact("Authorization: Bearer eyJ0eXAi+OiJKV1/QiLCJhbGc=")
+    assert "eyJ0eXAi" not in out
+    assert "REDACTED" in out

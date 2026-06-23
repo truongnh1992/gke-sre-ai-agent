@@ -32,3 +32,15 @@ def test_unknown_verb_blocked_by_default():
 def test_exec_blocked_even_if_named_get():
     d = evaluate(ToolCall(name="get_exec_session", args={}))
     assert d.allowed is False
+
+
+@pytest.mark.parametrize("name", ["deletePod", "delete-pod", "delete.pod", "scaleDeployment", "applyManifest"])
+def test_camelcase_and_hyphen_mutations_blocked_as_mutating(name):
+    d = evaluate(ToolCall(name=name, args={}))
+    assert d.allowed is False
+    assert "mutating" in d.reason.lower()
+
+
+@pytest.mark.parametrize("name", ["listPods", "getPod", "describe-deployment"])
+def test_camelcase_reads_allowed(name):
+    assert evaluate(ToolCall(name=name, args={})).allowed is True

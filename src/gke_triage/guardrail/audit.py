@@ -4,6 +4,7 @@ import json
 from datetime import datetime, timezone
 from pathlib import Path
 
+from gke_triage.guardrail.redact import redact
 from gke_triage.models import Decision, ToolCall
 
 
@@ -16,7 +17,7 @@ class AuditLog:
         entry = {
             "ts": datetime.now(timezone.utc).isoformat(),
             "tool": call.name,
-            "args": call.args,
+            "args": redact(call.args),
             "allowed": decision.allowed,
             "reason": decision.reason,
         }

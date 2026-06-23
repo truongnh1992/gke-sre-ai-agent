@@ -12,7 +12,7 @@ SENSITIVE_KEY_SUBSTRINGS = (
 )
 
 # Bearer / Authorization header values in free text.
-_BEARER_RE = re.compile(r"(Bearer\s+)([A-Za-z0-9._\-]{8,})")
+_BEARER_RE = re.compile(r"(Bearer\s+)([A-Za-z0-9._\-+/=]{8,})")
 
 
 def _is_sensitive_key(key: str) -> bool:
@@ -24,9 +24,9 @@ def _redact_node(node, parent_is_secret: bool):
     if isinstance(node, dict):
         # Special case: an env entry {name: API_KEY, value: ...}
         if "name" in node and "value" in node and _is_sensitive_key(str(node["name"])):
-            new = dict(node)
-            new["value"] = REDACTED
-            return {k: _redact_node(v, parent_is_secret) if k != "value" else v for k, v in new.items()}
+            out = {k: _redact_node(v, parent_is_secret) for k, v in node.items() if k != "value"}
+            out["value"] = REDACTED
+            return out
         out = {}
         for k, v in node.items():
             if _is_sensitive_key(k) or parent_is_secret:

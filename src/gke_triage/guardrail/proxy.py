@@ -24,5 +24,8 @@ class Guardrail:
         self.audit.record(call, decision)
         if not decision.allowed:
             return {"error": f"Tool call refused: {decision.reason}"}
-        result = self.upstream.call(call)
-        return redact(result)
+        try:
+            result = self.upstream.call(call)
+            return redact(result)
+        except Exception as exc:  # fail closed: never leak an unredacted/partial result
+            return {"error": f"Tool call failed safely: {type(exc).__name__}"}

@@ -42,3 +42,13 @@ def test_every_call_audited(tmp_path):
     assert len(lines) == 2
     assert json.loads(lines[0])["allowed"] is True
     assert json.loads(lines[1])["allowed"] is False
+
+
+def test_upstream_exception_fails_closed(tmp_path):
+    class Boom:
+        def call(self, call):
+            raise RuntimeError("db secret leaked in message")
+    g = Guardrail(upstream=Boom(), audit=AuditLog(tmp_path / "a.jsonl"))
+    out = g.enforce(ToolCall("list_pods", {}))
+    assert "error" in out
+    assert "leaked" not in str(out)  # exception message must not surface

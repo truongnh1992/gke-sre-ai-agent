@@ -29,3 +29,13 @@ def test_append_only_across_instances(tmp_path):
     AuditLog(path).record(ToolCall("get_pod", {}), Decision(True))
     AuditLog(path).record(ToolCall("get_pod", {}), Decision(True))
     assert len(path.read_text().strip().splitlines()) == 2
+
+
+def test_audit_redacts_secret_args(tmp_path):
+    import json
+    path = tmp_path / "a.jsonl"
+    AuditLog(path).record(ToolCall("get_secret", {"token": "supersecretvalue"}),
+                          Decision(allowed=True, reason="ok"))
+    entry = json.loads(path.read_text().strip())
+    assert "supersecretvalue" not in path.read_text()
+    assert entry["args"]["token"] == "***REDACTED***"
