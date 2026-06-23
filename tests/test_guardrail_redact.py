@@ -43,3 +43,23 @@ def test_redacts_bearer_with_base64_chars():
     out = redact("Authorization: Bearer eyJ0eXAi+OiJKV1/QiLCJhbGc=")
     assert "eyJ0eXAi" not in out
     assert "REDACTED" in out
+
+
+def test_redacts_sensitive_kv_inside_text_leaf():
+    # Secret serialized as YAML text inside an MCP content block
+    payload = {"content": [{"type": "text",
+               "text": "kind: Secret\ndata:\n  password: c2VjcmV0Cg==\n  host: db\n"}]}
+    out = redact(payload)
+    blob = out["content"][0]["text"]
+    assert "c2VjcmV0Cg==" not in blob
+    assert "REDACTED" in blob
+    assert "host: db" in blob  # non-sensitive line preserved
+
+
+def test_redacts_kv_in_plain_string():
+    assert "hunter2" not in redact("db_password=hunter2")
+    assert "REDACTED" in redact("api_key: AKIA12345")
+
+
+def test_text_redaction_preserves_nonsensitive():
+    assert redact("replicas: 3") == "replicas: 3"

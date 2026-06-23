@@ -14,6 +14,19 @@ SENSITIVE_KEY_SUBSTRINGS = (
 # Bearer / Authorization header values in free text.
 _BEARER_RE = re.compile(r"(Bearer\s+)([A-Za-z0-9._\-+/=]{8,})")
 
+# Sensitive key=value / key: value pairs in free text.
+_SENSITIVE_KV_RE = re.compile(
+    r"(?i)([\w.\-]*(?:password|passwd|secret|token|api[_\-]?key|apikey|"
+    r"private[_\-]?key|credential|auth|bearer)[\w.\-]*\s*[:=]\s*)"
+    r'(")?([^\s"\',}]+)'
+)
+
+
+def _redact_text(text: str) -> str:
+    text = _BEARER_RE.sub(rf"\1{REDACTED}", text)
+    text = _SENSITIVE_KV_RE.sub(rf"\g<1>\g<2>{REDACTED}", text)
+    return text
+
 
 def _is_sensitive_key(key: str) -> bool:
     k = key.lower()
@@ -36,13 +49,15 @@ def _redact_node(node, parent_is_secret: bool):
         return out
     if isinstance(node, list):
         return [_redact_node(x, parent_is_secret) for x in node]
+    if isinstance(node, str):
+        return _redact_text(node)
     return node
 
 
 def redact(payload):
     """Redact secrets from a tool-output payload (dict/list/str). Pure: never mutates input."""
     if isinstance(payload, str):
-        return _BEARER_RE.sub(rf"\1{REDACTED}", payload)
+        return _redact_text(payload)
     payload = copy.deepcopy(payload)
     is_secret = isinstance(payload, dict) and payload.get("kind") == "Secret"
     if is_secret and isinstance(payload.get("data"), dict):
