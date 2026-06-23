@@ -7,6 +7,7 @@ from mcp.server import Server
 from mcp.server.stdio import stdio_server
 from mcp.client.session import ClientSession
 from mcp.client.streamable_http import streamablehttp_client
+from mcp.types import TextContent
 
 from gke_triage.guardrail.audit import AuditLog
 from gke_triage.guardrail.policy import evaluate
@@ -32,10 +33,10 @@ async def serve(endpoint: str, audit_path: str) -> None:
                 decision = evaluate(call)
                 audit.record(call, decision)
                 if not decision.allowed:
-                    return [{"type": "text", "text": f"Refused: {decision.reason}"}]
+                    return [TextContent(type="text", text=f"Refused: {decision.reason}")]
                 raw = await session.call_tool(call.name, call.args)
                 payload = raw.model_dump() if hasattr(raw, "model_dump") else raw
-                return [{"type": "text", "text": str(redact(payload))}]
+                return [TextContent(type="text", text=str(redact(payload)))]
 
             async with stdio_server() as (r, w):
                 await server.run(r, w, server.create_initialization_options())
