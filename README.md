@@ -18,6 +18,10 @@ Before you start, make sure you have these installed and configured:
 | **agy** | AI reasoning engine (Antigravity CLI) | `go install github.com/anthropics/antigravity@latest` or your org's install method |
 | **uv** | Python package manager | `curl -LsSf https://astral.sh/uv/install.sh \| sh` |
 
+## Demo
+
+![App Features Demo](./demo.gif)
+
 ## Quick start
 
 ### 1. Authenticate with Google Cloud
