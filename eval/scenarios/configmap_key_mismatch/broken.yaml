@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ledger-config
+data:
+  DATABASE_URL: postgres://db:5432/ledger
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ledger
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app: ledger}
+  template:
+    metadata:
+      labels: {app: ledger}
+    spec:
+      containers:
+        - name: ledger
+          image: nginx:latest
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: ledger-config
+                  key: DB_URL   # mismatch: ConfigMap key is DATABASE_URL
