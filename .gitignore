@@ -11,3 +11,6 @@ __pycache__/
 # gke-triage runtime output
 gke-triage-out/
 *.jsonl
+
+# Editor/agent
+.claude/
