@@ -57,7 +57,10 @@ def test_install_skill_copies_skill_md(tmp_path):
     assert "STRUCTURED_RESULT" in out.read_text()
 
 
-def test_ensure_antigravity_setup_wires_both(tmp_path):
+def test_ensure_antigravity_setup_wires_both(tmp_path, monkeypatch):
+    import gke_triage.engines as eng
+    monkeypatch.setattr(eng, "DEFAULT_ISOLATED_MCP_CONFIG",
+                        str(tmp_path / "isolated_mcp.json"))
     cfg = tmp_path / "mcp_config.json"
     skills = tmp_path / "skills"
     info = ensure_antigravity_setup(upstream="https://up/mcp", audit_path="/a.jsonl",
@@ -67,3 +70,4 @@ def test_ensure_antigravity_setup_wires_both(tmp_path):
     assert data["mcpServers"][GUARDRAIL_SERVER_NAME]["env"]["GKE_TRIAGE_UPSTREAM"] == "https://up/mcp"
     assert (skills / "k8s-troubleshooter" / "SKILL.md").exists()
     assert info["server_name"] == GUARDRAIL_SERVER_NAME
+    assert "isolated_config_path" in info

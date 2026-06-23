@@ -1,39 +1,24 @@
-"""Deploy each broken scenario to a kind cluster, run gke-triage, and check the
-proposed patch makes the broken manifest match the expected fix.
+"""Check that each broken scenario has the fixtures needed to evaluate gke-triage's
+read-only diagnosis (a broken manifest and an expected-fix reference).
 
 Usage: uv run python eval/run_eval.py [--scenario NAME]
-Requires: kind, kubectl, gemini (authenticated). Designed for CI / manual runs.
+Designed for CI / manual runs.
 """
 from __future__ import annotations
 
 import argparse
-import subprocess
 import sys
-import tempfile
 from pathlib import Path
 
 SCEN = Path(__file__).parent / "scenarios"
 
 
-def _apply_patch_and_compare(broken: Path, patch_text: str, expected: Path) -> bool:
-    with tempfile.TemporaryDirectory() as d:
-        work = Path(d) / "m.yaml"
-        work.write_text(broken.read_text())
-        patch_file = Path(d) / "fix.patch"
-        patch_file.write_text(patch_text)
-        try:
-            subprocess.run(["git", "apply", "--unsafe-paths",
-                            f"--directory={d}", str(patch_file)], check=True)
-        except subprocess.CalledProcessError:
-            return False
-        return work.read_text().strip() == expected.read_text().strip()
-
-
 def run_scenario(name: str) -> bool:
     d = SCEN / name
     broken, expected = d / "broken.yaml", d / "expected_fix.yaml"
-    print(f"[scenario] {name}: broken+expected present = {broken.exists() and expected.exists()}")
-    return broken.exists() and expected.exists()
+    present = broken.exists() and expected.exists()
+    print(f"[scenario] {name}: broken+expected present = {present}")
+    return present
 
 
 def main() -> int:

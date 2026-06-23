@@ -1,12 +1,14 @@
 [project]
 name = "gke-triage"
 version = "0.1.0"
-description = "Local AI on-call SRE for GKE: read-only triage, evidence-cited reports, GitOps fix PRs."
+description = "Local AI on-call SRE for GKE: read-only triage with evidence-cited root-cause reports."
 requires-python = ">=3.12"
 dependencies = [
     "typer>=0.12",
     "mcp>=1.2",
     "pyyaml>=6.0",
+    "google-auth>=2.20",
+    "requests>=2.28",
 ]
 
 [project.scripts]

@@ -64,6 +64,26 @@ def install_skill(skills_dir: str | Path, skill_name: str = "k8s-troubleshooter"
     return str(dest)
 
 
+DEFAULT_ISOLATED_MCP_CONFIG = "~/.gke-triage/mcp_config.json"
+
+
+def write_isolated_mcp_config(upstream: str, audit_path: str,
+                              command: str = "gke-triage",
+                              path: str | Path | None = None) -> str:
+    """Write an MCP config containing only the guardrail server.
+
+    Other MCP servers registered in the shared config can hang agy during
+    startup. An isolated config avoids that.  Returns the path.
+    """
+    cfg_path = Path(path or DEFAULT_ISOLATED_MCP_CONFIG).expanduser()
+    cfg_path.parent.mkdir(parents=True, exist_ok=True)
+    data = {"mcpServers": {
+        GUARDRAIL_SERVER_NAME: guardrail_server_entry(upstream, audit_path, command),
+    }}
+    cfg_path.write_text(json.dumps(data, indent=2, sort_keys=True) + "\n")
+    return str(cfg_path)
+
+
 def ensure_antigravity_setup(upstream: str, audit_path: str,
                              config_path: str | Path = DEFAULT_MCP_CONFIG,
                              skills_dir: str | Path = DEFAULT_SKILLS_DIR,
@@ -71,12 +91,15 @@ def ensure_antigravity_setup(upstream: str, audit_path: str,
     """Register the guardrail MCP server and install the skill for Antigravity CLI.
 
     Idempotent; safe to call before every run. Returns the resolved paths.
+    Also writes an isolated MCP config to avoid other servers blocking startup.
     """
     register_mcp_server(config_path, GUARDRAIL_SERVER_NAME,
                         guardrail_server_entry(upstream, audit_path, command))
+    isolated_config = write_isolated_mcp_config(upstream, audit_path, command)
     skill_path = install_skill(skills_dir)
     return {
         "config_path": str(Path(config_path).expanduser()),
+        "isolated_config_path": isolated_config,
         "skill_path": skill_path,
         "server_name": GUARDRAIL_SERVER_NAME,
     }

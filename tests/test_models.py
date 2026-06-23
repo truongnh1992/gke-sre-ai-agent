@@ -17,19 +17,17 @@ def test_finding_and_triageresult():
     f = Finding(
         summary="image tag typo",
         evidence=["pod payments-1 ImagePullBackOff", "manifest line 12: image: pay:latst"],
-        manifest_path="apps/payments/deployment.yaml",
     )
     r = TriageResult(
         root_cause="image tag 'latst' does not exist",
         confidence="high",
         findings=[f],
-        proposed_patch="--- a/...\n+++ b/...\n",
     )
     assert r.confidence == "high"
-    assert r.findings[0].manifest_path.endswith("deployment.yaml")
+    assert r.findings[0].summary == "image tag typo"
     assert r.is_conclusive()
 
 
-def test_triageresult_inconclusive_when_no_patch():
-    r = TriageResult(root_cause="unclear", confidence="low", findings=[], proposed_patch=None)
+def test_triageresult_inconclusive_when_low_confidence():
+    r = TriageResult(root_cause="unclear", confidence="low", findings=[])
     assert not r.is_conclusive()

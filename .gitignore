@@ -12,5 +12,9 @@ __pycache__/
 gke-triage-out/
 *.jsonl
 
+# OS
+.DS_Store
+
 # Editor/agent
 .claude/
+.cursor/

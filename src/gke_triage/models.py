@@ -19,7 +19,6 @@ class Decision:
 class Finding:
     summary: str
     evidence: list[str] = field(default_factory=list)
-    manifest_path: str | None = None
 
 
 @dataclass
@@ -27,7 +26,6 @@ class TriageResult:
     root_cause: str
     confidence: str  # "high" | "medium" | "low"
     findings: list[Finding] = field(default_factory=list)
-    proposed_patch: str | None = None
 
     def is_conclusive(self) -> bool:
-        return bool(self.proposed_patch) and self.confidence in {"high", "medium"}
+        return self.confidence in {"high", "medium"}

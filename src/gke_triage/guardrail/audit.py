@@ -10,7 +10,7 @@ from gke_triage.models import Decision, ToolCall
 
 class AuditLog:
     def __init__(self, path: str | Path):
-        self.path = Path(path)
+        self.path = Path(path).expanduser()
         self.path.parent.mkdir(parents=True, exist_ok=True)
 
     def record(self, call: ToolCall, decision: Decision) -> None:

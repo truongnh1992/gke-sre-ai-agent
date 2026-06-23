@@ -5,12 +5,11 @@ from pathlib import Path
 import typer
 
 from gke_triage.config import DEFAULT_CONFIG_YAML, DEFAULT_ENDPOINT, DEFAULT_AUDIT
-from gke_triage.context.sources import find_manifest_for_workload
 from gke_triage.engines import ensure_antigravity_setup, DEFAULT_MCP_CONFIG, DEFAULT_SKILLS_DIR
-from gke_triage.orchestrator import diagnose as run_diagnose, get_runner
+from gke_triage.orchestrator import DEFAULT_TIMEOUT, diagnose as run_diagnose
 from gke_triage.reporter import write_outputs
 
-app = typer.Typer(help="Local AI on-call SRE for GKE (read-only triage + GitOps fix PRs).")
+app = typer.Typer(help="Local AI on-call SRE for GKE (read-only triage with evidence-cited reports).")
 
 
 @app.command()
@@ -40,29 +39,23 @@ def register(
 def diagnose(
     workload: str,
     namespace: str = typer.Option("default", "-n", "--namespace"),
-    repo: str = typer.Option(".", "--repo", help="GitOps repo root"),
     output: str = typer.Option("./gke-triage-out", "--output"),
-    open_pr: bool = typer.Option(True, "--pr/--no-pr"),
     engine: str = typer.Option("antigravity", "--engine", help="Reasoning engine: antigravity or gemini"),
+    verbose: bool = typer.Option(False, "--verbose", "-v", help="Print raw engine output for debugging"),
+    timeout: int = typer.Option(DEFAULT_TIMEOUT, "--timeout", "-t", help="Max seconds to wait for the agent (0 = no limit)"),
 ):
-    """Investigate a workload read-only and emit a report + proposed fix."""
-    manifest_hint = find_manifest_for_workload(repo, workload)
+    """Investigate a workload read-only and emit an evidence-cited report."""
     try:
         if engine == "antigravity":
             ensure_antigravity_setup(upstream=DEFAULT_ENDPOINT, audit_path=DEFAULT_AUDIT)
-        runner = get_runner(engine)
-        result = run_diagnose(workload, namespace, runner=runner,
-                              workdir=Path(repo), manifest_hint=manifest_hint)
+        effective_timeout = timeout if timeout > 0 else None
+        result = run_diagnose(workload, namespace, engine=engine, verbose=verbose,
+                              timeout=effective_timeout)
     except (RuntimeError, ValueError) as exc:
         typer.echo(f"Error: {exc}")
         raise typer.Exit(code=1)
-    out = write_outputs(output, workload, namespace, result,
-                        open_pr=open_pr, repo_root=repo)
+    out = write_outputs(output, workload, namespace, result)
     typer.echo(f"Report: {Path(output) / out['report']}")
-    if out["patch"]:
-        typer.echo(f"Patch:  {Path(output) / out['patch']}")
-    if out["pr_url"]:
-        typer.echo(f"PR:     {out['pr_url']}")
     if not result.is_conclusive():
         typer.echo("Result inconclusive — see ranked hypotheses in the report.")
 
