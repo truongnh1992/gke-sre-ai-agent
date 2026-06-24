@@ -7,6 +7,8 @@ evidence-cited root-cause report, and never touches your cluster. Under the
 hood it uses the Antigravity CLI (`agy`, powered by Gemini) talking to the
 GKE MCP server through a safety guardrail proxy.
 
+**Technical Deep-Dive**: https://truongnh-gde.dev/gke-sre-ai-agent.html
+
 ## Prerequisites
 
 Before you start, make sure you have these installed and configured:
